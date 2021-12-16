@@ -9,8 +9,8 @@ price = soup.find_all('span', class_='bold green size22')
 name = soup.find_all('span', class_='blue bold')
 url = soup.find('a', class_='address').get('href')
 
-for i in url:
-    print(i)
+for i in name:
+    print(name)
 #print(type(price))
 
 db = sqlite3.connect('archive.db')
@@ -30,3 +30,6 @@ db.commit()
 
 #sql.execute(f"INSERT INTO cars VALUES (?, ?, ?)", (proba_name, proba_url, proba_price))
 #db.commit()
+
+for value in sql.execute("SELECT * FROM cars"):
+    print(value)
