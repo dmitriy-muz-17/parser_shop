@@ -1,35 +1,31 @@
 import requests
-import sqlite3
 from bs4 import BeautifulSoup
 
-url = 'https://auto.ria.com/uk/search/?indexName=auto,order_auto,newauto_search&country.import.usa.not=-1&price.USD.lte=20000&price.currency=1&gearbox.id[1]=2&gearbox.id[2]=3&gearbox.id[3]=4&gearbox.id[4]=5&fuel.id[5]=6&abroad.not=0&custom.not=1&page=0&size=12'
-response = requests.get(url)
-soup = BeautifulSoup(response.text, 'lxml')
-price = soup.find_all('span', class_='bold green size22')
-name = soup.find_all('span', class_='blue bold')
-url = soup.find('a', class_='address').get('href')
+HEADERS = {'User-Agent': 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:95.0) Gecko/20100101 Firefox/95.0', 'accept': '*/*'}
+URL = 'https://auto.ria.com/uk/search/?indexName=auto,order_auto,newauto_search&country.import.usa.not=-1&price.currency=1&gearbox.id[1]=2&fuel.id[5]=6&abroad.not=0&custom.not=-1&page=0&size=12'
 
-for i in name:
-    print(name)
-#print(type(price))
-
-db = sqlite3.connect('archive.db')
-sql = db.cursor()
-
-#sql.execute("DROP TABLE cars")
-#db.commit()
-
-sql.execute("""CREATE TABLE IF NOT EXISTS cars (
-    name TEXT,
-    url TEXT,
-    price TEXT
-)""")
-db.commit()
+def get_html(url, params=None):
+    response = requests.get(url, headers=HEADERS, params=params)
+    return response
 
 
+def get_content(html):
+    soup = BeautifulSoup(html.text, 'html.parser')
+    elements = soup.find_all('div', class_='content-bar')
+    e_cars = []
+    for element in elements:
+        e_cars.append({
+            'name': element.find('span', class_='blue bold').get_text(strip=True),
+            'link': element.find('a', class_='address').get('href'),
+            'price_usd': element.find('span', class_='bold green size22').get_text(strip=True),
+            'price_uah': element.find('span', class_='i-block').get_text(strip=True)
+        })
+    return  e_cars
 
-#sql.execute(f"INSERT INTO cars VALUES (?, ?, ?)", (proba_name, proba_url, proba_price))
-#db.commit()
-
-for value in sql.execute("SELECT * FROM cars"):
-    print(value)
+def parse():
+    html = get_html(URL)
+    #print(html.status_code)
+    if(html.status_code == 200):
+        return get_content(html)
+    else:
+        print("Error with conection to web-site")
